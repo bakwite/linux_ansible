@@ -1,0 +1,11 @@
+# 内网网卡配置，由 Ansible network 角色生成。
+TYPE=Ethernet
+BOOTPROTO=none
+DEFROUTE=no
+NAME={{ network_internal_interface }}
+DEVICE={{ network_internal_interface }}
+ONBOOT=yes
+IPADDR={{ network_internal_ip }}
+PREFIX={{ network_internal_prefix }}
+PEERDNS=no
+IPV6INIT=no

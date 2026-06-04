@@ -1,0 +1,6 @@
+---
+- hosts: lb
+  roles:
+    - www
+    - nginx
+    - lb

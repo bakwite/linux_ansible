@@ -1,0 +1,67 @@
+#部署nfs服务
+- name: Install nfs server
+  yum:
+    name: nfs-utils
+    state: present
+
+#创建让其他服务器挂载的目录，必须在启动 nfs-server 前完成，否则 exportfs 会因为 /data 不存在而失败。
+- name: Create /data directory
+  file:
+    path: /data
+    state: directory
+    owner: www
+    group: www
+    mode: '0755'
+
+- name: Cofigure nfs server
+  template:
+    src: exports.j2
+    dest: /etc/exports
+  notify:
+    - Reload nfs exports
+    - Restart nfs server
+
+- name: Start rpcbind server
+  systemd:
+    name: rpcbind
+    state: started
+    enabled: yes
+
+- name: Start nfs server
+  systemd:
+    name: nfs-server
+    state: started
+    enabled: yes
+
+
+#部署lsyncd服务
+- name: Install lsyncd server
+  yum:
+    name: lsyncd
+    state: present
+
+- name: Configure lsyncd server
+  template:
+    src: lsyncd.conf.j2
+    dest: /etc/lsyncd.conf
+
+#创建必要数据
+- name: Prepare password file
+  copy:
+    src: rsyncd.pwd
+    dest: /etc/rsyncd.pwd  
+    mode: '0600'
+
+- name: Start lsyncd server
+  systemd:
+    name: lsyncd
+    state: started
+    enabled: yes
+
+#强制拉起lsyncd服务    
+- name: Restart lsyncd server
+  systemd:
+    name: lsyncd
+    state: restarted
+
+

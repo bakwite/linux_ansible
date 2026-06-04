@@ -1,0 +1,29 @@
+global_defs {                 
+    router_id {{ router_id }}             
+}
+
+vrrp_script check_web{
+    script "/scripts/check_web.sh"
+    interval 5
+}
+
+vrrp_instance VI_1 {
+    state {{ state }}
+    interface {{ interface }}
+    virtual_router_id {{ virtual_router_id }}
+    priority {{ priority }}
+    {% if nopreempt is defined and nopreempt %}
+    nopreempt        # 配置为不抢占
+    {% endif %}
+    advert_int {{ advert_int }}
+    authentication {           
+        auth_type PASS         
+        auth_pass {{ auth_pass }}
+    }
+    virtual_ipaddress {       
+        {{ virtual_ip }}
+    }
+    track_script {
+        check_web
+    }
+}

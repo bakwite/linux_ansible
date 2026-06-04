@@ -1,0 +1,30 @@
+---
+# 是否启用 network 角色。
+network_manage: true
+
+# 管理网和内网的网卡名；你的 Kylin 虚拟机当前是 ens33/ens36。
+network_management_interface: ens33
+network_internal_interface: ens36
+
+# 管理网 IP 默认读取 hosts.ini 里的 ansible_host。
+network_management_ip: "{{ ansible_host }}"
+network_management_prefix: 24
+
+# 管理网默认网关和 DNS。
+network_gateway: 10.0.0.2
+network_dns:
+  - 223.5.5.5
+  - 114.114.114.114
+
+# 内网 IP 默认读取 hosts.ini 里的 internal_ip。
+network_internal_ip: "{{ internal_ip | default('') }}"
+network_internal_prefix: 24
+
+# Kylin/CentOS/RHEL 系网卡配置目录。
+network_scripts_dir: /etc/sysconfig/network-scripts
+
+# 是否由 Ansible 管理 /etc/resolv.conf。
+network_manage_resolv_conf: true
+
+# 网卡配置变化后是否异步重启网络服务。
+network_restart_on_change: true

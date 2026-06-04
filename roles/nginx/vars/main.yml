@@ -1,0 +1,2 @@
+nginx_rpm_package: nginx-1.26.1-2.el7.ngx.x86_64.rpm
+nginx_rpm_remote_path: "/tmp/{{ nginx_rpm_package }}"

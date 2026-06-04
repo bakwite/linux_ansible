@@ -1,0 +1,13 @@
+#创建www用户,uid和gid为666
+- name: Create Group www
+  group:
+    name: www
+    gid: 666
+
+- name: Create User www
+  user:
+    name: www
+    group: www
+    uid: 666
+    shell: /sbin/nologin
+    create_home: false

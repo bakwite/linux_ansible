@@ -1,0 +1,69 @@
+- name: Bootstrap SSH key authentication
+  hosts: localhost
+  gather_facts: false
+  roles:
+    - ssh
+
+# 网络初始化：先给被管理服务器配置固定 IP、网关、DNS，避免后续业务部署依赖手工改网卡。
+- name: Configure managed server network
+  hosts: managed
+  gather_facts: false
+  serial: 1
+  roles:
+    - role: network
+      tags: network
+
+# 系统基线：主机名、hosts、基础工具、时间同步、防火墙、SELinux、limits、sysctl。
+- name: System baseline
+  hosts: all
+  roles:
+    - role: basic
+      tags: basic
+
+- hosts: rd
+  roles:
+    - redis
+
+- hosts: db
+  roles:
+    - mysql
+
+- hosts: backup
+  roles:
+    - www
+    - backup
+
+- hosts: nfs
+  roles:
+    - www
+    - nfs
+
+- hosts: web
+  roles:
+    - www
+    - mount
+    - nginx
+    - php
+    - java1.8
+    - tomcat
+    - web
+
+- hosts: lb
+  roles:
+    - www
+    - nginx
+    - lb
+
+- hosts: ruoyi_web
+  roles:
+    - java17
+
+- hosts: ruoyi_webback
+  roles:
+    - ruoyi-back
+
+- hosts: ruoyi_webfront
+  roles:
+    - www
+    - nginx
+    - ruoyi-front

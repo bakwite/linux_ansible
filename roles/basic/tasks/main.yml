@@ -1,0 +1,178 @@
+---
+# 设置系统主机名，来源是 hosts.ini 里的 inventory 主机名，例如 web01/db01/lb01。
+- name: Set system hostname
+  hostname:
+    name: "{{ inventory_hostname }}"
+
+# 写入所有被管理主机的管理网 IP 和内网 IP，方便通过主机名互相访问。
+- name: Manage inventory hosts records
+  blockinfile:
+    path: /etc/hosts
+    marker: "# {mark} ANSIBLE MANAGED HOSTS"
+    block: |
+      {% for host in groups['managed'] | default([]) %}
+      {{ hostvars[host].ansible_host }} {{ host }}
+      {% if hostvars[host].internal_ip is defined %}
+      {{ hostvars[host].internal_ip }} {{ host }}-internal
+      {% endif %}
+      {% endfor %}
+  when: basic_manage_hosts | bool
+
+# Ansible 远程模块依赖 Python3，提前检查可以让报错更清楚。
+- name: Check Python 3 binary
+  stat:
+    path: /usr/bin/python3
+  register: basic_python3
+
+- name: Fail when Python 3 is missing
+  fail:
+    msg: "/usr/bin/python3 is required for Ansible remote execution."
+  when: not basic_python3.stat.exists
+
+# 检查 yum/dnf 源是否可用；这里不替换 Kylin 源，只做缓存检查。
+- name: Check yum metadata availability
+  command: "{{ basic_package_manager }} -q makecache"
+  register: basic_yum_cache
+  changed_when: false
+  failed_when: false
+  when: basic_check_yum_cache | bool
+
+- name: Warn when yum metadata check fails
+  debug:
+    msg: "YUM metadata check failed on {{ inventory_hostname }}: {{ basic_yum_cache.stderr | default(basic_yum_cache.stdout) }}"
+  when:
+    - basic_check_yum_cache | bool
+    - basic_yum_cache.rc | default(0) != 0
+
+# 复制项目内离线 RPM 到目标主机，避免依赖外部 EPEL 仓库。
+- name: Copy local RPM packages
+  copy:
+    src: "{{ item }}"
+    dest: "/tmp/{{ item }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop: "{{ basic_local_rpm_packages }}"
+  loop_control:
+    label: "{{ item }}"
+  when:
+    - basic_local_rpm_packages | length > 0
+    - (not basic_check_yum_cache | bool) or (basic_yum_cache.rc | default(0) == 0)
+
+# 安装项目内离线 RPM，比如当前 Kylin 源没有的 iftop。
+- name: Install local RPM packages
+  yum:
+    name: "/tmp/{{ item }}"
+    state: present
+    disable_gpg_check: yes
+  loop: "{{ basic_local_rpm_packages }}"
+  loop_control:
+    label: "{{ item }}"
+  register: basic_local_rpm_install
+  when:
+    - basic_local_rpm_packages | length > 0
+    - (not basic_check_yum_cache | bool) or (basic_yum_cache.rc | default(0) == 0)
+
+# 逐个安装常用软件，避免一个软件包缺失导致整批基础优化中断。
+- name: Install base packages
+  yum:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ basic_packages }}"
+  loop_control:
+    label: "{{ item }}"
+  register: basic_package_install
+  ignore_errors: true
+  when: (not basic_check_yum_cache | bool) or (basic_yum_cache.rc | default(0) == 0)
+
+# 提示安装失败的软件包，方便后续确认是不是源里没有对应包名。
+- name: Warn when base package install fails
+  debug:
+    msg: "Package install failed on {{ inventory_hostname }}: {{ item.item }} - {{ item.msg | default('unknown error') }}"
+  loop: "{{ basic_package_install.results | default([]) }}"
+  loop_control:
+    label: "{{ item.item | default('unknown') }}"
+  when: item.failed | default(false)
+
+# 统一时区，避免日志时间、定时任务时间不一致。
+- name: Set timezone
+  timezone:
+    name: "{{ basic_timezone }}"
+
+# 启动 chronyd 做时间同步。
+- name: Start chronyd service
+  systemd:
+    name: chronyd
+    state: started
+    enabled: yes
+
+# 收集服务列表，用来判断系统是否安装了 firewalld。
+- name: Collect service facts
+  service_facts:
+
+# 实验环境关闭 firewalld，生产环境可通过变量改成 false。
+- name: Disable firewalld
+  systemd:
+    name: firewalld
+    state: stopped
+    enabled: no
+  when:
+    - basic_disable_firewalld | bool
+    - "'firewalld.service' in ansible_facts.services"
+
+# SELinux 不同系统可能不存在，所以检查失败不让 playbook 中断。
+- name: Check SELinux status
+  command: getenforce
+  register: basic_selinux_status
+  changed_when: false
+  failed_when: false
+  when: basic_disable_selinux | bool
+
+# 当前启动周期先改成 permissive，避免马上影响服务部署。
+- name: Set SELinux to permissive for current boot
+  command: setenforce 0
+  changed_when: basic_selinux_status.stdout != 'Permissive'
+  failed_when: false
+  when:
+    - basic_disable_selinux | bool
+    - basic_selinux_status.rc == 0
+    - basic_selinux_status.stdout != 'Disabled'
+
+- name: Check SELinux config file
+  stat:
+    path: /etc/selinux/config
+  register: basic_selinux_config
+  when: basic_disable_selinux | bool
+
+# 永久关闭 SELinux，重启后也保持 disabled。
+- name: Disable SELinux permanently
+  lineinfile:
+    path: /etc/selinux/config
+    regexp: '^SELINUX='
+    line: 'SELINUX=disabled'
+  when:
+    - basic_disable_selinux | bool
+    - basic_selinux_config.stat.exists
+
+# 提高文件句柄和进程数限制。
+- name: Configure system limits
+  copy:
+    dest: /etc/security/limits.d/99-ansible-basic.conf
+    owner: root
+    group: root
+    mode: '0644'
+    content: |
+      * soft nofile {{ basic_nofile_limit }}
+      * hard nofile {{ basic_nofile_limit }}
+      * soft nproc {{ basic_nproc_limit }}
+      * hard nproc {{ basic_nproc_limit }}
+
+# 写入并刷新基础 sysctl 参数。
+- name: Configure sysctl parameters
+  sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+    reload: yes
+    sysctl_set: yes
+  loop: "{{ basic_sysctl }}"

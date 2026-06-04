@@ -1,0 +1,21 @@
+- name: Install MariaDB
+  yum:
+    name:
+      - mariadb-server
+      - mariadb
+      - python3-PyMySQL
+    state: present
+
+- name: Start MariaDB
+  systemd:
+    name: mariadb
+    state: started
+    enabled: yes
+
+- name: Wait for MariaDB
+  command: mysqladmin ping
+  register: mysql_ping
+  retries: 20
+  delay: 3
+  until: mysql_ping.rc == 0
+  changed_when: false

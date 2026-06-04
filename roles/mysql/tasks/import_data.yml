@@ -1,0 +1,28 @@
+- name: Check if already imported
+  stat:
+    path: /root/.db_imported
+  register: db_imported
+
+- name: Unarchive database dump
+  unarchive:
+    src: all_databases.sql.tar.gz
+    dest: /root
+    remote_src: no
+  when: not db_imported.stat.exists
+
+- name: Import all_databases.sql
+  mysql_db:
+    name: all
+    state: import
+    target: /root/all_databases.sql
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+    login_host: 127.0.0.1
+  when: not db_imported.stat.exists
+  register: import_result
+
+- name: Mark database imported
+  file:
+    path: /root/.db_imported
+    state: touch
+  when: not db_imported.stat.exists and import_result is success

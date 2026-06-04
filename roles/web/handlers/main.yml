@@ -1,0 +1,14 @@
+- name: Restart nginx server
+  systemd:
+    name: nginx
+    state: restarted
+
+- name: Restart php server
+  systemd:
+    name: php-fpm
+    state: restarted
+
+- name: Restart tomcat server
+  systemd:
+    name: tomcat
+    state: restarted

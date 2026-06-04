@@ -1,0 +1,22 @@
+﻿ansible_user: root
+ansible_password: 'admin'
+ansible_ssh_private_key_file: /root/.ssh/id_rsa
+
+nginx_port: 80
+php_fpm_port: 9000
+
+service_ip_var: internal_ip
+app_network_cidr: 172.16.1.0/24
+
+db_primary_host: "{{ hostvars[groups['db'][0]][service_ip_var] | default(hostvars[groups['db'][0]].ansible_host) }}"
+redis_host: "{{ hostvars[groups['rd'][0]][service_ip_var] | default(hostvars[groups['rd'][0]].ansible_host) }}"
+redis_password: admin
+nfs_host: "{{ hostvars[groups['nfs'][0]][service_ip_var] | default(hostvars[groups['nfs'][0]].ansible_host) }}"
+backup_host: "{{ hostvars[groups['backup'][0]].ansible_host }}"
+web_backend_hosts: "{{ groups['web'] | map('extract', hostvars, service_ip_var) | list }}"
+ruoyi_backend_host: "{{ hostvars[groups['ruoyi_webback'][0]].ansible_host }}"
+
+app_db_user: 'admin'
+app_db_password: 'admin'
+mysql_repl_user: "{{ app_db_user }}"
+mysql_repl_password: "{{ app_db_password }}"

@@ -1,0 +1,17 @@
+#部署java1.8
+- name: Copy JDK rpm to web
+  copy:
+    src: jdk1.8.rpm
+    dest: /tmp/jdk1.8.rpm
+
+- name: Install JDK from rpm
+  yum:
+    name: /tmp/jdk1.8.rpm
+    state: present
+    disable_gpg_check: yes
+
+- name: Clean up rpm file
+  file:
+    path: /tmp/jdk1.8.rpm
+    state: absent
+

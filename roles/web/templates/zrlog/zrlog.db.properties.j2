@@ -1,0 +1,5 @@
+#This is a database configuration file
+driverClass=com.mysql.cj.jdbc.Driver
+user={{ mysql_repl_user }}
+password={{ mysql_repl_password }}
+jdbcUrl=jdbc\:mysql\://{{ db_primary_host }}\:3306/zrlog?characterEncoding\=UTF-8&allowPublicKeyRetrieval\=true&useSSL\=false&serverTimezone\=GMT

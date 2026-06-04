@@ -1,0 +1,43 @@
+- name: Remove external Nginx YUM repo
+  file:
+    path: /etc/yum.repos.d/nginx.repo
+    state: absent
+
+- name: Copy Nginx RPM package
+  copy:
+    src: "{{ nginx_rpm_package }}"
+    dest: "{{ nginx_rpm_remote_path }}"
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Install Nginx Server from local RPM
+  yum:
+    name: "{{ nginx_rpm_remote_path }}"
+    state: present
+    disable_gpg_check: yes
+    allow_downgrade: yes
+
+- name: Configure Nginx Server
+  copy:
+    src: nginx.conf
+    dest: /etc/nginx/nginx.conf
+
+- name: Configure proxy_params
+  copy:
+    src: proxy_params
+    dest: /etc/nginx/proxy_params
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Restart nginx server
+  systemd:
+    name: nginx
+    state: restarted
+
+- name: Start Nginx Server
+  systemd:
+    name: nginx
+    state: started
+    enabled: yes

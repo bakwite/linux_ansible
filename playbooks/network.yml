@@ -1,0 +1,9 @@
+# 单独配置网络时运行这个 playbook，不会部署业务服务。
+- name: Configure managed server network
+  hosts: managed
+  gather_facts: false
+  # 网络配置逐台执行，降低批量改 IP 时 SSH 同时中断的风险。
+  serial: 1
+  roles:
+    - role: network
+      tags: network

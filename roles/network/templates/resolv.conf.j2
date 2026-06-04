@@ -1,0 +1,4 @@
+# DNS 配置，由 Ansible network 角色生成。
+{% for dns_server in network_dns %}
+nameserver {{ dns_server }}
+{% endfor %}

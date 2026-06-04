@@ -1,0 +1,24 @@
+upstream zrlog {
+{% for server in web_backend_hosts %}
+    server {{ server }}:80;
+{% endfor %}
+    keepalive 16;
+}
+
+server {
+    listen 443 ssl;
+    server_name www.zrlog.com;
+    ssl_certificate {{ ssl_cert_path }}/server.pem;
+    ssl_certificate_key {{ ssl_cert_path }}/server.key;
+
+    location / {
+        proxy_pass http://zrlog;
+        include proxy_params;
+    }
+}
+
+server {
+    listen 80;
+    server_name www.zrlog.com;
+    return 302 https://$server_name$request_uri;
+}

@@ -1,0 +1,54 @@
+#部署若依前端
+- name: Create /code directory
+  file:
+    path: /code
+    state: directory
+    mode: '0755'
+
+- name: Install ruoyi
+  unarchive:
+    src: RuoYi-Vue.tar.gz
+    dest: /code
+    remote_src: no
+
+- name: Copy app directory
+  unarchive:
+    src: app.tar.gz
+    dest: /
+    remote_src: no
+
+- name: Install node server
+  unarchive:
+    src: node.tar.xz
+    dest: /app/tools
+    owner: root
+    group: root
+    mode: '0755'
+    remote_src: no
+    creates: /app/tools/node/bin/mvn
+
+- name: Add Node to PATH in /etc/profile
+  lineinfile:
+    path: /etc/profile
+    line: 'export PATH=/app/tools/node/bin/:$PATH'
+    insertafter: EOF
+    state: present
+
+- name: Source /etc/profile (reload environment)
+  shell: source /etc/profile
+  args:
+    executable: /bin/bash
+  changed_when: false
+
+- name: Configure ruoyi.conf
+  template:
+    src: ruoyi.conf.j2
+    dest: /etc/nginx/conf.d/ruoyi.conf
+   
+- name: Restart nginx server
+  systemd:
+    name: nginx
+    state: restarted
+
+
+

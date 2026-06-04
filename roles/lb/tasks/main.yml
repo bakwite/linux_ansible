@@ -1,0 +1,100 @@
+---
+# 配置负载均衡 HTTPS。真实生产证书通常由阿里云申请，这里如果没有证书文件，就生成学习用自签名证书。
+- name: Create /etc/nginx/ssl_key directory
+  file:
+    path: /etc/nginx/ssl_key
+    state: directory
+    mode: '0755'
+
+- name: Check custom SSL certificate in project
+  stat:
+    path: "{{ role_path }}/files/server.pem"
+  delegate_to: localhost
+  register: lb_custom_ssl_cert
+
+- name: Check custom SSL private key in project
+  stat:
+    path: "{{ role_path }}/files/server.key"
+  delegate_to: localhost
+  register: lb_custom_ssl_key
+
+- name: Copy custom SSL certificate to lb
+  copy:
+    src: server.pem
+    dest: /etc/nginx/ssl_key/server.pem
+    mode: '0644'
+  when:
+    - lb_custom_ssl_cert.stat.exists
+    - lb_custom_ssl_key.stat.exists
+
+- name: Copy custom SSL private key to lb
+  copy:
+    src: server.key
+    dest: /etc/nginx/ssl_key/server.key
+    mode: '0600'
+  when:
+    - lb_custom_ssl_cert.stat.exists
+    - lb_custom_ssl_key.stat.exists
+
+- name: Generate study self-signed SSL certificate
+  command: >
+    openssl req -x509 -nodes -newkey rsa:2048 -days 3650
+    -keyout /etc/nginx/ssl_key/server.key
+    -out /etc/nginx/ssl_key/server.pem
+    -subj "/CN=linux-ansible-study"
+  args:
+    creates: /etc/nginx/ssl_key/server.key
+  when: not (lb_custom_ssl_cert.stat.exists and lb_custom_ssl_key.stat.exists)
+
+- name: Configure HTTPS proxy sites
+  template:
+    src: lb.conf.j2
+    dest: /etc/nginx/conf.d/lb.conf
+  notify: Restart nginx server
+
+- name: Configure proxy_params
+  copy:
+    src: proxy_params
+    dest: /etc/nginx/proxy_params
+  notify: Restart nginx server
+
+- name: Start nginx server
+  systemd:
+    name: nginx
+    state: started
+    enabled: yes
+
+- name: Install keepalived server
+  yum:
+    name: keepalived
+    state: present
+
+- name: Create /scripts directory
+  file:
+    path: /scripts
+    state: directory
+    mode: '0755'
+
+- name: Copy check_web.sh to /scripts
+  copy:
+    src: check_web.sh
+    dest: /scripts/check_web.sh
+    mode: '0755'
+
+- name: Configure keepalived
+  template:
+    src: keepalived.conf.j2
+    dest: /etc/keepalived/keepalived.conf
+  notify: Restart keepalived server
+
+- name: Start keepalived
+  systemd:
+    name: keepalived
+    state: started
+    enabled: yes
+
+- name: Configure proxy_pass zrlog
+  template:
+    src: zrlog.conf.j2
+    dest: /etc/nginx/conf.d/zrlog.conf
+  notify: Restart nginx server

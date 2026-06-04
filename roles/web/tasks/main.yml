@@ -1,0 +1,160 @@
+- name: Install mariadb client package
+  yum:
+    name: mariadb
+    state: present
+
+- name: Unarchive wp.tar.gz to web
+  unarchive:
+    src: wp/wp.tar.gz
+    dest: /code/
+    owner: www
+    group: www
+    mode: '0755'
+    remote_src: no
+    creates: /code/wp/index.php
+
+- name: Configure wp
+  copy:
+    src: wp/wp.conf
+    dest: /etc/nginx/conf.d/
+  notify:
+    - Restart nginx server
+    - Restart php server
+
+- name: Set DB_HOST in wp-config.php
+  lineinfile:
+    path: /code/wp/wp-config.php
+    regexp: "define\\( 'DB_HOST',"
+    line: "define( 'DB_HOST', '{{ db_primary_host }}' );"
+    backrefs: yes
+    state: present
+
+- name: Unarchive zh.tar.gz to web
+  unarchive:
+    src: zh/zh.tar.gz
+    dest: /code/
+    owner: www
+    group: www
+    mode: '0755'
+    remote_src: no
+    creates: /code/zh/index.php
+
+- name: Configure zh
+  copy:
+    src: zh/zh.conf
+    dest: /etc/nginx/conf.d/
+  notify:
+    - Restart nginx server
+    - Restart php server
+
+- name: Set DB_HOST in zh database.php
+  lineinfile:
+    path: /code/zh/system/config/database.php
+    regexp: "'host'"
+    line: "  'host' => '{{ db_primary_host }}',"
+    backrefs: yes
+    state: present
+
+- name: Unarchive phpMyAdmin.tar.gz to web
+  unarchive:
+    src: phpMyAdmin/phpMyAdmin.tar.gz
+    dest: /code/
+    owner: www
+    group: www
+    mode: '0755'
+    remote_src: no
+    creates: /code/phpMyAdmin/index.php
+
+- name: Configure phpMyAdmin nginx
+  copy:
+    src: phpMyAdmin/phpMyAdmin.conf
+    dest: /etc/nginx/conf.d/
+  notify:
+    - Restart nginx server
+    - Restart php server
+
+- name: Configure phpMyAdmin database host
+  template:
+    src: phpMyAdmin/config.inc.php.j2
+    dest: /code/phpMyAdmin/config.inc.php
+  notify: Restart php server
+
+- name: Configure phpMyAdmin redis session
+  template:
+    src: phpMyAdmin/redis.ini.j2
+    dest: /etc/php.d/redis.ini
+  notify: Restart php server
+
+- name: Check Redis PHP extension
+  stat:
+    path: /usr/lib64/php/modules/redis.so
+  register: redis_php_extension
+
+- name: Verify Redis PHP extension from php role
+  fail:
+    msg: "Redis PHP extension is missing. Run the php role first; it installs the project-provided redis_modules.tar.gz package."
+  when: not redis_php_extension.stat.exists
+
+- name: Configure PHP to load Redis extension
+  copy:
+    dest: /etc/php.d/40-redis.ini
+    content: |
+      extension=redis.so
+  notify: Restart php server
+
+- name: Configure PHP Session to use Redis
+  copy:
+    dest: /etc/php.d/50-redis-session.ini
+    content: |
+      session.save_handler = redis
+      session.save_path = "tcp://{{ redis_host }}:6379?auth={{ redis_password }}"
+  notify: Restart php server
+
+- name: Unarchive zrlog server
+  unarchive:
+    src: zrlog/zrlog.tar.gz
+    dest: /code/
+    owner: www
+    group: www
+    mode: '0755'
+    remote_src: no
+    creates: /code/zrlog/ROOT/admin/index.html
+
+- name: Configure zrlog database
+  template:
+    src: zrlog/zrlog.db.properties.j2
+    dest: /code/zrlog/ROOT/WEB-INF/db.properties
+  notify: Restart tomcat server
+
+- name: Create tomcat ROOT context directory
+  file:
+    path: /soft/tomcat/conf/Catalina/localhost
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Configure tomcat ROOT context for zrlog
+  copy:
+    dest: /soft/tomcat/conf/Catalina/localhost/ROOT.xml
+    owner: root
+    group: root
+    mode: '0644'
+    content: |
+      <?xml version="1.0" encoding="UTF-8"?>
+      <Context docBase="/code/zrlog/ROOT" path="" reloadable="false" />
+  notify: Restart tomcat server
+
+- name: Create zrlog static directory
+  file:
+    path: /code/zrlog/ROOT
+    state: directory
+    owner: www
+    group: www
+    mode: '0755'
+
+- name: Configure zrlog nginx
+  template:
+    src: zrlog/zrlog.conf.j2
+    dest: /etc/nginx/conf.d/zrlog.conf
+  notify: Restart nginx server

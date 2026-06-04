@@ -1,0 +1,14 @@
+---
+# managed 组统一网络变量；各主机具体 IP 仍然写在 hosts.ini。
+network_management_interface: ens33
+network_internal_interface: ens36
+
+# 管理网掩码、网关和 DNS。
+network_management_prefix: 24
+network_gateway: 10.0.0.2
+network_dns:
+  - 223.5.5.5
+  - 114.114.114.114
+
+# 内网掩码。
+network_internal_prefix: 24

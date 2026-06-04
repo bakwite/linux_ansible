@@ -1,0 +1,58 @@
+---
+# 检查关键网络变量，避免变量缺失导致写出错误网卡配置。
+- name: Validate management network variables
+  assert:
+    that:
+      - network_management_interface | length > 0
+      - network_management_ip | length > 0
+      - network_management_prefix | int > 0
+      - network_gateway | length > 0
+      - network_dns | length > 0
+    fail_msg: "Network variables are incomplete for {{ inventory_hostname }}."
+  when: network_manage | bool
+
+# 确保网卡配置目录存在。
+- name: Ensure network scripts directory exists
+  file:
+    path: "{{ network_scripts_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  when: network_manage | bool
+
+# 配置管理网网卡，IP 来自 ansible_host，网关和 DNS 来自组变量。
+- name: Configure management network interface
+  template:
+    src: ifcfg-management.j2
+    dest: "{{ network_scripts_dir }}/ifcfg-{{ network_management_interface }}"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Apply network configuration
+  when: network_manage | bool
+
+# 配置内网网卡，IP 来自 internal_ip；没有 internal_ip 的主机跳过。
+- name: Configure internal network interface
+  template:
+    src: ifcfg-internal.j2
+    dest: "{{ network_scripts_dir }}/ifcfg-{{ network_internal_interface }}"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Apply network configuration
+  when:
+    - network_manage | bool
+    - network_internal_ip | length > 0
+
+# 写入 DNS 解析配置。
+- name: Configure resolver DNS
+  template:
+    src: resolv.conf.j2
+    dest: /etc/resolv.conf
+    owner: root
+    group: root
+    mode: '0644'
+  when:
+    - network_manage | bool
+    - network_manage_resolv_conf | bool

@@ -1,0 +1,18 @@
+---
+# 网卡文件变化后异步刷新网络，避免 Ansible SSH 会话长时间卡住。
+- name: Apply network configuration
+  shell: |
+    set -o pipefail
+    if command -v nmcli >/dev/null 2>&1; then
+      nmcli connection reload || true
+      nmcli connection up "{{ network_management_interface }}" || true
+      {% if network_internal_ip | length > 0 %}
+      nmcli connection up "{{ network_internal_interface }}" || true
+      {% endif %}
+    fi
+    systemctl restart network 2>/dev/null || systemctl restart NetworkManager 2>/dev/null || true
+  args:
+    executable: /bin/bash
+  async: 45
+  poll: 0
+  when: network_restart_on_change | bool

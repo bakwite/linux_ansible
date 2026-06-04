@@ -1,0 +1,48 @@
+- name: Install sshpass on the Ansible control node
+  package:
+    name: sshpass
+    state: present
+  run_once: true
+
+- name: Create /root/.ssh directory
+  file:
+    path: /root/.ssh
+    state: directory
+    mode: '0700'
+
+- name: Generate SSH key on the Ansible control node
+  shell: |
+    [ -f /root/.ssh/id_rsa ] || ssh-keygen -t rsa -b 2048 -N "" -f /root/.ssh/id_rsa
+  args:
+    creates: /root/.ssh/id_rsa
+  run_once: true
+
+- name: Wait for managed hosts SSH
+  wait_for:
+    host: "{{ hostvars[item].ansible_host | default(item) }}"
+    port: 22
+    timeout: 300
+  loop: "{{ query('inventory_hostnames', 'managed') }}"
+
+- name: Add inventory hosts to known_hosts
+  shell: |
+    ssh-keygen -R {{ hostvars[item].ansible_host | default(item) }} >/dev/null 2>&1 || true
+    ssh-keyscan -H {{ hostvars[item].ansible_host | default(item) }} >> /root/.ssh/known_hosts 2>/dev/null
+  loop: "{{ query('inventory_hostnames', 'managed') }}"
+  changed_when: false
+
+- name: Copy SSH public key to inventory hosts
+  shell: |
+    sshpass -p '{{ hostvars[item].ansible_password | default(ansible_password) }}' \
+      ssh-copy-id -o StrictHostKeyChecking=no \
+      {{ hostvars[item].ansible_user | default(ansible_user) }}@{{ hostvars[item].ansible_host | default(item) }}
+  loop: "{{ query('inventory_hostnames', 'managed') }}"
+  no_log: true
+
+- name: Verify SSH key authentication
+  command: >
+    ssh -o BatchMode=yes -o PasswordAuthentication=no
+    {{ hostvars[item].ansible_user | default(ansible_user) }}@{{ hostvars[item].ansible_host | default(item) }}
+    true
+  loop: "{{ query('inventory_hostnames', 'managed') }}"
+  changed_when: false

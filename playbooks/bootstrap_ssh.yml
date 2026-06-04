@@ -1,0 +1,5 @@
+- name: Bootstrap SSH key authentication
+  hosts: localhost
+  gather_facts: false
+  roles:
+    - ssh

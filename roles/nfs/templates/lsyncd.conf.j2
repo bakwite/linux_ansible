@@ -1,0 +1,20 @@
+﻿settings {
+    logfile = "/var/log/lsyncd/lsyncd.log",
+    statusFile = "/var/log/lsyncd/lsyncd.status",
+    maxProcesses = 2,
+    nodaemon = false,
+}
+
+sync {
+    default.rsync,
+    source = "/data/",
+    target = "admin@{{ backup_host }}::backup",
+    delete = true,
+    delay = 1,
+    rsync = {
+        binary = "/usr/bin/rsync",
+        password_file = "/etc/rsyncd.pwd",
+        archive = true,
+        compress = true,
+    }
+}

@@ -1,0 +1,26 @@
+﻿interface: ens33
+virtual_router_id: 50
+advert_int: 1
+auth_pass: admin
+virtual_ip: 10.0.0.203
+
+ssl_cert_path: /etc/nginx/ssl_key
+
+sites:
+  - name: wp
+    server_name: www.wp.com
+    upstream: webs_wp
+    ssl_cert: server.pem
+    ssl_key: server.key
+
+  - name: zh
+    server_name: www.zh.com
+    upstream: webs_zh
+    ssl_cert: server.pem
+    ssl_key: server.key
+
+  - name: php
+    server_name: www.php.com
+    upstream: webs_php
+    ssl_cert: server.pem
+    ssl_key: server.key

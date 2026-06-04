@@ -1,0 +1,18 @@
+#部署tomcat
+- name: Unarchive tomcat server
+  unarchive:
+    src: soft.tar.gz
+    dest: /
+    remote_src: no
+
+- name: Configure tomcat server
+  copy:
+    src: tomcat.service
+    dest: /usr/lib/systemd/system/tomcat.service
+  notify: Reload systemd configure
+
+- name: Start tomcat server
+  systemd:
+    name: tomcat
+    state: started
+    enabled: yes

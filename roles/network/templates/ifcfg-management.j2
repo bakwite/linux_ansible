@@ -1,0 +1,15 @@
+# 管理网网卡配置，由 Ansible network 角色生成。
+TYPE=Ethernet
+BOOTPROTO=none
+DEFROUTE=yes
+NAME={{ network_management_interface }}
+DEVICE={{ network_management_interface }}
+ONBOOT=yes
+IPADDR={{ network_management_ip }}
+PREFIX={{ network_management_prefix }}
+GATEWAY={{ network_gateway }}
+PEERDNS=no
+{% for dns_server in network_dns %}
+DNS{{ loop.index }}={{ dns_server }}
+{% endfor %}
+IPV6INIT=no

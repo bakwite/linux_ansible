@@ -1,0 +1,27 @@
+- name: Install redis server
+  yum:
+    name: redis
+    state: present
+
+- name: Configrue redis server
+  copy:
+    src: redis.conf
+    dest: /etc/
+
+- name: Bind redis to inventory service IP
+  lineinfile:
+    path: /etc/redis.conf
+    regexp: '^bind '
+    line: "bind 127.0.0.1 -::1 {{ redis_host }}"
+
+- name: Configure redis password
+  lineinfile:
+    path: /etc/redis.conf
+    regexp: '^#?\s*requirepass '
+    line: "requirepass {{ redis_password }}"
+  
+- name: Start redis server
+  systemd:
+    name: redis
+    state: started 
+    enabled: yes 

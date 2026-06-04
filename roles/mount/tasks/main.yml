@@ -1,0 +1,17 @@
+- name: Install nfs-utils
+  yum:
+    name: nfs-utils
+    state: present
+
+- name: Create /code directory
+  file:
+    path: /code
+    state: directory
+
+- name: Mount to nfs server
+  mount:
+    path: /code
+    src: "{{ nfs_host }}:/data"
+    fstype: nfs
+    opts: defaults,_netdev
+    state: mounted

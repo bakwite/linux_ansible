@@ -1,0 +1,64 @@
+#安装php及其依赖
+- name: Install PHP Server
+  yum:
+    name: 
+      - php
+      - php-bcmath
+      - php-cli
+      - php-common
+      - php-devel
+      - php-embedded
+      - php-fpm
+      - php-gd
+      - php-intl
+      - php-mbstring
+      - php-mysqlnd
+      - php-opcache
+      - php-pdo
+      - php-process
+      - php-xml
+      - php-json
+    state: present
+
+- name: Configure PHP Server
+  copy: 
+    src: www.conf
+    dest: /etc/php-fpm.d/www.conf
+
+- name: Start PHP Server
+  systemd:
+    name: php-fpm
+    state: started
+    enabled: yes
+
+#部署php中的redis插件
+- name: Unarchive redis_modules.tar.gz to web
+  unarchive:
+    src: redis_modules.tar.gz
+    dest: /usr/lib64/php
+    mode: '0755'
+    remote_src: no
+  notify: Restart php server
+
+- name: Configure php
+  copy:
+    src: php.ini
+    dest: /etc/
+  notify: Restart php server
+
+- name: Configure PHP session redis endpoint
+  lineinfile:
+    path: /etc/php.ini
+    regexp: '^session\.save_path = "tcp://'
+    line: 'session.save_path = "tcp://{{ redis_host }}:6379?auth={{ redis_password }}"'
+  notify: Restart php server
+
+#开启redis插件功能
+- name: Enable redis extension
+  lineinfile:
+    path: /etc/php.ini
+    regexp: '^;?extension.*redis\.so'
+    line: 'extension=redis.so'
+    backrefs: yes                #找不到就不添加
+    state: present
+  notify: Restart php server

@@ -1,0 +1,16 @@
+#部署java17
+- name: Copy JDK rpm to web
+  copy:
+    src: jdk17.rpm
+    dest: /tmp/jdk17.rpm
+
+- name: Install JDK from rpm
+  yum:
+    name: /tmp/jdk17.rpm
+    state: present
+    disable_gpg_check: yes
+
+- name: Clean up rpm file
+  file:
+    path: /tmp/jdk17.rpm
+    state: absent

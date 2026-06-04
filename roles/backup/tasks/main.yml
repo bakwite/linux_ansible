@@ -1,0 +1,30 @@
+- name: Install rsyncd server
+  yum:
+    name: rsync
+    state: present
+
+- name: Configure rsyncd server
+  copy:
+    src: rsyncd.conf
+    dest: /etc/rsyncd.conf
+
+#创建必要的数据信息
+- name: Create /backup/nfs directory
+  file:
+    path: /backup/nfs
+    state: directory
+    owner: 'www'
+    group: 'www'
+    mode: '0755' 
+
+- name: Prepare password file
+  copy:
+    src: rsyncd.pwd
+    dest: /etc/rsyncd.pwd
+    mode: '0600'
+
+- name: Start rsyncd server
+  systemd:
+    name: rsyncd
+    state: started
+    enabled: yes

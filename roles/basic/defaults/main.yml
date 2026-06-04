@@ -1,0 +1,67 @@
+---
+# 系统时区，所有服务器统一使用上海时间。
+basic_timezone: Asia/Shanghai
+
+# 实验环境关闭 firewalld，避免服务端口被防火墙拦截。
+basic_disable_firewalld: true
+
+# 实验环境关闭 SELinux，避免权限策略影响 Web/MySQL/NFS 等服务。
+basic_disable_selinux: true
+
+# 是否由 Ansible 统一维护 /etc/hosts。
+basic_manage_hosts: true
+
+# 是否检查 yum/dnf 源可用性；只检查，不替换系统源。
+basic_check_yum_cache: true
+basic_package_manager: yum
+
+# 项目内离线 RPM 包；适合当前系统源没有、但又希望固定版本安装的软件。
+basic_local_rpm_packages:
+  - iftop-1.0-0.21.pre4.el8.x86_64.rpm
+
+# 常用基础工具和排障工具；如果某个包当前 yum 源没有，basic 会提示但不中断整体部署。
+basic_packages:
+  - vim
+  - tree
+  - wget
+  - bash-completion
+  - lrzsz
+  - net-tools
+  - sysstat
+  - iotop
+  - iftop
+  - htop
+  - unzip
+  - nc
+  - nmap
+  - telnet
+  - bc
+  - psmisc
+  - httpd-tools
+  - bind-utils
+  - nethogs
+  - expect
+  - ntpdate
+  - network-scripts
+  - screen
+  - openssl
+  - curl
+  - lsof
+  - rsync
+  - tar
+  - chrony
+
+# 文件句柄和进程数限制，避免服务并发稍高时受默认限制影响。
+basic_nofile_limit: 65535
+basic_nproc_limit: 65535
+
+# 基础内核参数：文件句柄、转发、TIME_WAIT 复用、连接队列。
+basic_sysctl:
+  - key: fs.file-max
+    value: '655350'
+  - key: net.ipv4.ip_forward
+    value: '1'
+  - key: net.ipv4.tcp_tw_reuse
+    value: '1'
+  - key: net.core.somaxconn
+    value: '1024'

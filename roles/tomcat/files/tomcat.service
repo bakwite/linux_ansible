@@ -1,0 +1,12 @@
+[Unit]
+Description=Apache Tomcat Server
+After=network.target remote-fs.target nss-lookup.target
+ 
+[Service]
+Type=forking
+ExecStart=/soft/tomcat/bin/startup.sh
+ExecStop=/soft/tomcat/bin/shutdown.sh
+ExecRestart=/soft/tomcat/bin/shutdown.sh  && sleep 2  && /soft/tomcat/bin/startup.sh
+ 
+[Install]
+WantedBy=multi-user.target

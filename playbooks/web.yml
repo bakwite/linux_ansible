@@ -1,0 +1,10 @@
+---
+- hosts: web
+  roles:
+    - www
+    - mount
+    - nginx
+    - php
+    - java1.8
+    - tomcat
+    - web
