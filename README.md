@@ -322,10 +322,27 @@ java -jar ruoyi-admin.jar
 
 GitHub 仓库保存代码、文档和小文件。JDK、应用包等大文件会放到 GitHub Release。
 
-如果只是学习代码结构，可以直接 clone 仓库。如果要完整部署，请下载 Release 中的完整包：
+如果只是学习代码结构，可以直接 clone 仓库。如果要完整部署，请下载 Release 中的完整包分卷：
 
 ```text
-linux_ansible_full.zip
+linux_ansible_full.zip.001
+linux_ansible_full.zip.002
+linux_ansible_full.zip.003
+...
 ```
 
-完整包解压后放到 Ansible 控制机 `/ansible` 即可使用。
+所有分卷必须放在同一个目录下，再合并成 `linux_ansible_full.zip`。
+
+Windows 合并命令：
+
+```cmd
+copy /b linux_ansible_full.zip.* linux_ansible_full.zip
+```
+
+Linux 合并命令：
+
+```bash
+cat linux_ansible_full.zip.* > linux_ansible_full.zip
+```
+
+合并后解压完整包，把里面的项目放到 Ansible 控制机 `/ansible` 即可使用。
