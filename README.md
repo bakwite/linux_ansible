@@ -12,9 +12,18 @@
 系统版本: V10
 内核版本: 4.19.90-52.22.v2207.ky10.x86_64
 Ansible 版本: ansible core 2.13.13
+安装镜像: Kylin-Server-V10-SP3-General-Release-2303-X86_64.iso
 ```
 
 请尽量使用同版本 Kylin 系统。因为本项目里有固定版本 RPM 包、Kylin 服务名、yum 包名和网卡配置方式，如果换成其他系统，可能会出现包安装失败、服务名不一致、网卡配置不生效等问题。
+
+系统 ISO 不包含在本仓库和 Release 中。请通过麒麟软件官方渠道或你所在组织的正版镜像库获取上述同名镜像，不要随意换成 CentOS、Rocky Linux、Ubuntu 或其他 Kylin 版本。
+
+拿到镜像后可校验 SHA256。本项目验证时使用的 ISO 校验值为：
+
+```text
+7E89F3C7DD9454F458A48969A1689EE4002335E839F67A999ACD28D4007E11E7
+```
 
 ## 二、项目整体思维图
 
@@ -322,27 +331,16 @@ java -jar ruoyi-admin.jar
 
 GitHub 仓库保存代码、文档和小文件。JDK、应用包等大文件会放到 GitHub Release。
 
-如果只是学习代码结构，可以直接 clone 仓库。如果要完整部署，请下载 Release 中的完整包分卷：
+如果只是学习代码结构，可以直接 clone 仓库。如果要完整部署，请直接下载 Release 中的完整包：
 
 ```text
-linux_ansible_full.zip.001
-linux_ansible_full.zip.002
-linux_ansible_full.zip.003
-...
+linux_ansible_full.zip
 ```
 
-所有分卷必须放在同一个目录下，再合并成 `linux_ansible_full.zip`。
+完整包 SHA256：
 
-Windows 合并命令：
-
-```cmd
-copy /b linux_ansible_full.zip.* linux_ansible_full.zip
+```text
+63EAE2C5143811F85AFECF875A1B422D18E548A9564CEB08F9588FB1ED38CF79
 ```
 
-Linux 合并命令：
-
-```bash
-cat linux_ansible_full.zip.* > linux_ansible_full.zip
-```
-
-合并后解压完整包，把里面的项目放到 Ansible 控制机 `/ansible` 即可使用。
+下载后解压完整包，把里面的项目放到 Ansible 控制机 `/ansible` 即可使用。
