@@ -17,7 +17,17 @@ Ansible 版本: ansible core 2.13.13
 
 请尽量使用同版本 Kylin 系统。因为本项目里有固定版本 RPM 包、Kylin 服务名、yum 包名和网卡配置方式，如果换成其他系统，可能会出现包安装失败、服务名不一致、网卡配置不生效等问题。
 
-系统 ISO 不包含在本仓库和 Release 中。请通过麒麟软件官方渠道或你所在组织的正版镜像库获取上述同名镜像，不要随意换成 CentOS、Rocky Linux、Ubuntu 或其他 Kylin 版本。
+系统 ISO 不包含在本仓库和 Release 中。请通过下面的麒麟软件官方地址或你所在组织的正版镜像库获取，不要随意换成 CentOS、Rocky Linux、Ubuntu 或其他 Kylin 版本。
+
+- [麒麟软件官方镜像下载页面](https://eco.kylinos.cn/partners/mirror.html?class_id=1&query_key=V10)
+- [同版本 Kylin V10 SP3 2303 x86_64 ISO 官方直链](https://distro-images.kylinos.cn:8802/web_pungi/download/share/vYTMm38Pkaq0KRGzg9pBsWf2c16FUwJL/Kylin-Server-V10-SP3-General-Release-2303-X86_64.iso)
+
+下载信息：
+
+```text
+文件名: Kylin-Server-V10-SP3-General-Release-2303-X86_64.iso
+文件大小: 4,578,914,304 字节（约 4.26 GiB）
+```
 
 拿到镜像后可校验 SHA256。本项目验证时使用的 ISO 校验值为：
 
