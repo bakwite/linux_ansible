@@ -1,6 +1,6 @@
 # linux_ansible 自动化部署项目
 
-这是一个用于学习 Linux 企业级自动化部署的 Ansible 项目。你可以把它理解成“一键部署一整套网站业务环境”的脚本集合：先准备 SSH 免密，再初始化系统，然后部署 MySQL、Redis、Nginx、PHP、NFS、备份、负载均衡、WordPress、phpMyAdmin、ZrLog 和 RuoYi。
+这是一个用于 Linux 企业级自动化部署的 Ansible 项目。你可以把它理解成“一键部署一整套网站业务环境”的脚本集合：先准备 SSH 免密，再初始化系统，然后部署 MySQL、Redis、Nginx、PHP、NFS、备份、负载均衡、WordPress、phpMyAdmin、ZrLog 和 RuoYi。
 
 ## 一、必须使用的系统版本
 
@@ -200,7 +200,7 @@ ansible-playbook playbooks/site.yml
 
 ## 九、账号和密码
 
-学习版统一账号和密码，方便新手理解和测试：
+统一账号和密码，方便新手理解和测试：
 
 ```text
 服务器 SSH 用户: root
@@ -227,7 +227,7 @@ roles/lb/files/server.pem
 roles/lb/files/server.key
 ```
 
-本公开仓库不会上传真实秘钥，所以这里隐藏了。如果你没有放阿里云证书，本项目会自动生成学习用自签名证书，保证 Ansible 部署不会因为缺少证书而失败。
+本公开仓库不会上传真实秘钥，所以这里隐藏了。如果你没有放阿里云证书，本项目会自动生成自签名证书，保证 Ansible 部署不会因为缺少证书而失败。
 
 ## 十一、Windows hosts 解析
 
@@ -335,7 +335,7 @@ java -jar ruoyi-admin.jar
 
 ### 5. GitHub 仓库里为什么没有真实 server.key？
 
-`server.key` 是证书私钥，不能公开。真实环境请使用阿里云证书；学习环境会自动生成自签名证书。
+`server.key` 是证书私钥，不能公开。真实环境请使用阿里云证书；测试环境会自动生成自签名证书。
 
 ## 十四、下载说明
 
